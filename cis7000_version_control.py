@@ -49,7 +49,7 @@ def main():
 
     with open(metadata_path, "r+") as file:
         metadata = json.load(file)
-        currVer: str = metadata["version"]  # <--- add `id` value.
+        currVer: str = metadata["version"]  # add `id` value.
 
         newVer: str = _increment_version(currVer, args.mode)
         newTs: str = _get_current_timestamp()
@@ -80,7 +80,7 @@ def get_args() -> "Args":
     )
 
     parser.add_argument(
-        "assetDir", type=_is_valid_directory, help="Path to asset directory"
+        "assetDir", type=_is_valid_directory, help="Path to asset directory in platform-specific syntax. Can be relative, absolute, cannonical, etc."
     )
 
     parser.add_argument(
