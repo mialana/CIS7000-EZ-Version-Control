@@ -1,15 +1,14 @@
 # CIS7000 EZ Version Control
 
-- [CIS7000 EZ Version Control](#cis7000-ez-version-control)
-  - [Contents](#contents)
-  - [Getting Started](#getting-started)
-  - [`cis7000_version_control.py`](#cis7000_version_controlpy)
-  - [Makefile](#makefile)
-      - [Example formats](#example-formats)
-    - [Command-line Usage](#command-line-usage)
-  - [Version History](#version-history)
-  - [Authors](#authors)
-  - [Tags](#tags)
+- [Contents](#contents)
+- [Getting Started](#getting-started)
+- [`cis7000_version_control.py`](#cis7000_version_controlpy)
+- [Makefile](#makefile)
+    - [Example formats](#example-formats)
+  - [Command-line Usage](#command-line-usage)
+- [Version History](#version-history)
+- [Authors](#authors)
+- [Tags](#tags)
 
 ## Contents
 
