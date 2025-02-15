@@ -54,7 +54,7 @@ def main():
         newVer: str = _increment_version(currVer, args.mode)
         newTs: str = _get_current_timestamp()
 
-        metadata["version"] = newVer
+        metadata["assetStructureVersion"] = newVer
         metadata["lastModified"] = newTs
 
         if not args.D:
