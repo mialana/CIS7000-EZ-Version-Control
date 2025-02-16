@@ -10,6 +10,7 @@ from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List, Dict
 
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=10)
 logger = logging.getLogger(__name__)
@@ -29,16 +30,18 @@ class Mode(Enum):
 @dataclass
 class Args:
     assetDir: Path
-    V: bool = True
-    D: bool = False
+    note: str
+    author: str
     mode: "Mode" = Mode.PATCH
+    dryRun: bool = False
+    verbosity: bool = True
 
 
 # --------------------------------------------------
 # MAIN
 def main():
     args = get_args()
-    _setup_logger(args.V)
+    _setup_logger(args.verbosity)
 
     logger.info(f"Beginning {args.mode} operation...")
 
@@ -49,23 +52,41 @@ def main():
 
     with open(metadata_path, "r+") as file:
         metadata = json.load(file)
-        currVer: str = metadata["version"]  # add `id` value.
 
+        """Handle version incrementing"""
+
+        currVer: str = metadata["assetStructureVersion"]  # add `id` value.
         newVer: str = _increment_version(currVer, args.mode)
-        newTs: str = _get_current_timestamp()
+
+        """Handle new commit"""
+        commitList: List = metadata["commitHistory"]
+        newTimestamp: str = _get_current_timestamp()
+
+        newCommit: Dict = {
+            "author": args.author,
+            "version": newVer,
+            "timestamp": newTimestamp,
+            "note": args.note,
+        }
+
+        commitList.insert(0, newCommit)
 
         metadata["assetStructureVersion"] = newVer
-        metadata["lastModified"] = newTs
+        metadata["commitHistory"] = commitList
 
-        if not args.D:
+        logger.info(f"  New asset version is: {newVer}")
+        logger.info(f"  New last-modified timestamp is: {newTimestamp}")
+        logger.info(f"  New commit is: {json.dumps(newCommit, indent=4)}")
+
+        logger.info("\n\n`metadata.json` CONTENTS:\n")
+        logger.info(json.dumps(metadata, indent=4))
+
+        if not args.dryRun:
             file.seek(0)  # reset file pointer to beginning.
             json.dump(metadata, file, indent=4)
             file.truncate()  # remove excess bytes if necessary
 
-        logger.info(f"  New asset version is: {newVer}")
-        logger.info(f"  New last-modified timestamp is: {newTs}")
-
-    msg_helper: str = "" if not args.D else "Dry-run of "
+    msg_helper: str = "" if not args.dryRun else "Dry run of "
     logger.info(f"{msg_helper}{args.mode} operation complete!")
 
 
@@ -80,21 +101,25 @@ def get_args() -> "Args":
     )
 
     parser.add_argument(
-        "assetDir", type=_is_valid_directory, help="Path to asset directory in platform-specific syntax. Can be relative, absolute, cannonical, etc."
+        "assetDir",
+        type=_is_valid_directory,
+        help="Path to asset directory in platform-specific syntax. Can be relative, absolute, cannonical, etc.",
     )
 
     parser.add_argument(
-        "-D",
-        help="Run program in dry-run mode",
-        action="store_true",
-        default=False,
+        "--note",
+        required=True,
+        metavar="STR",
+        type=_check_note_length,
+        help="Note to attach to commit. Max 100 characters",
     )
 
     parser.add_argument(
-        "-V",
-        help="Run program with verbosity",
-        action="store_true",
-        default=True,
+        "--author",
+        required=True,
+        metavar="STR",
+        type=str,
+        help="Author of commit",
     )
 
     parser.add_argument(
@@ -103,6 +128,22 @@ def get_args() -> "Args":
         type=_Mode_from_str,
         default=Mode.PATCH,
         help=f"Choices are {list(Mode.__members__)}",
+    )
+
+    parser.add_argument(
+        "-D",
+        "--dryRun",
+        help="Run program in dry-run mode",
+        action="store_true",
+        default=False,
+    )
+
+    parser.add_argument(
+        "-V",
+        "--verbosity",
+        help="Run program with verbosity",
+        action="store_true",
+        default=True,
     )
 
     return Args(**vars(parser.parse_args()))
@@ -130,6 +171,14 @@ def _setup_logger(verbose: bool):
         logger.setLevel(30)  # 30 maps to WARNING level
 
 
+def _check_note_length(note: str) -> str:
+    """Checks if commit note is less than 100 characters"""
+    if len(note) <= 100:
+        return note
+    else:
+        raise argparse.ArgumentTypeError("Commit note is longer than 100 characters.")
+
+
 def _is_valid_directory(path: str) -> Path:
     """Handles typing of `assetDir` argument for argparse"""
     canonical_path: Path = Path(path).resolve()
@@ -153,7 +202,7 @@ def _increment_version(currVer: str, mode: "Mode") -> str:
 
 def _get_current_timestamp() -> str:
     """Updates ASSET_JSON["lastModified"]
-    
+
     Returns:
         a formatted timestamp (e.g. 2024-12-03T14:55:13-05)
     """
