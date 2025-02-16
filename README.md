@@ -80,6 +80,8 @@ make patch # run script in `PATCH` mode
 ```
 
 ## Version History
+* 2.0.0
+  * Handle custom "commitHistory" functionality
 
 * 1.0.0 (Initial Release)
   * Automate updating of `lastModified` field in `metadata.json`
@@ -101,4 +103,4 @@ make patch # run script in `PATCH` mode
 ## Tags
 
 *@Personal*
-*@v1.0.0*
+*@v2.0.0*
